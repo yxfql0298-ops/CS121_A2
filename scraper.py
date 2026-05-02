@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import re
@@ -56,9 +55,6 @@ EVENT_DETAIL_TEMPLATE_LIMIT = 50
 EVENT_ARCHIVE_TEMPLATE_LIMIT = 5
 WIKI_NAMESPACE_TEMPLATE_LIMIT = 40
 QUERY_TEMPLATE_LIMIT = 20
-SIMHASH_BITS = 64
-SIMHASH_NEAR_DUP_THRESHOLD = 4
-MIN_SIMHASH_TOKENS = 50
 
 STOP_WORDS = {
     "a", "about", "above", "after", "again", "against", "all", "am", "an",
@@ -170,21 +166,17 @@ _longest_page = ("", 0)
 _analytics_loaded = False
 _accepted_prefix_counts = Counter()
 _accepted_template_counts = Counter()
-_exact_text_hashes = set()
-_simhashes = []
 
 
 def scraper(url, resp):
     page_url = canonicalize_url(getattr(resp, "url", url)) or canonicalize_url(url)
     words = extract_page_words(resp)
-    is_duplicate = False
     if page_url and is_valid(page_url) and words:
-        is_duplicate = is_exact_or_near_duplicate(words)
-        record_page(page_url, words, count_words=not is_duplicate)
+        record_page(page_url, words)
 
     links = extract_next_links(url, resp)
     valid_links = [link for link in links if is_valid(link)]
-    if is_duplicate or not should_expand_page(page_url, words, valid_links):
+    if not should_expand_page(page_url, words, valid_links):
         return []
     return [
         link for link in valid_links

@@ -2769,7 +2769,6 @@ https://ics.uci.edu/~eppstein/pubs/filter.html
 https://ics.uci.edu/~eppstein/pubs/p-egypt.html
 https://ics.uci.edu/~eppstein/pubs/p-egypt2.html
 https://ics.uci.edu/~eppstein/pubs/p-kpath.html
-https://ics.uci.edu/~eppstein/pubs/pubs.ff
 https://ics.uci.edu/~eppstein/pubs/selected.html
 https://ics.uci.edu/~eppstein/recmath.html
 https://ics.uci.edu/~eppstein/research.html
