@@ -180,7 +180,7 @@ def scraper(url, resp):
         return []
     return [
         link for link in valid_links
-        if not exceeds_template_budget(link)
+        if accept_crawl_link(link)
     ]
 
 
@@ -433,8 +433,13 @@ def exceeds_prefix_budget(parsed):
     prefix = prefix_key(parsed)
     if not prefix:
         return False
-    _accepted_prefix_counts[prefix] += 1
-    return _accepted_prefix_counts[prefix] > PREFIX_SOFT_LIMIT
+    return _accepted_prefix_counts[prefix] >= PREFIX_SOFT_LIMIT
+
+
+def consume_prefix_budget(parsed):
+    prefix = prefix_key(parsed)
+    if prefix:
+        _accepted_prefix_counts[prefix] += 1
 
 
 def should_expand_page(url, words, links):
@@ -476,6 +481,10 @@ def is_root_or_seed_page(url):
             "www.cs.uci.edu",
             "www.informatics.uci.edu",
             "www.stat.uci.edu",
+            "cs.ics.uci.edu",
+            "informatics.ics.uci.edu",
+            "www.informatics.ics.uci.edu",
+            "stat.ics.uci.edu",
             "ics.uci.edu",
             "cs.uci.edu",
             "informatics.uci.edu",
@@ -520,9 +529,24 @@ def exceeds_template_budget(url):
     template = url_template(url)
     if not template:
         return False
+    return _accepted_template_counts[template] >= template_limit(template)
 
+
+def consume_template_budget(url):
+    template = url_template(url)
+    if not template:
+        return
     _accepted_template_counts[template] += 1
-    return _accepted_template_counts[template] > template_limit(template)
+
+
+def accept_crawl_link(url):
+    parsed = urlparse(url)
+    if exceeds_prefix_budget(parsed) or exceeds_template_budget(url):
+        return False
+
+    consume_prefix_budget(parsed)
+    consume_template_budget(url)
+    return True
 
 
 def template_limit(template):
