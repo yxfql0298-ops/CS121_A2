@@ -3,9 +3,12 @@ import os
 import re
 from collections import Counter
 from html import unescape
+from threading import RLock
 from urllib.parse import parse_qsl, urlencode, urldefrag, urljoin, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
+
+from simhash import simhash, is_near_duplicate, SIMHASH_THRESHOLD
 
 
 ALLOWED_DOMAINS = (
@@ -36,6 +39,7 @@ UNIQUE_URLS_PATH = os.path.join(ANALYTICS_DIR, "unique_urls.txt")
 WORD_COUNTS_PATH = os.path.join(ANALYTICS_DIR, "word_counts.tsv")
 SUBDOMAINS_PATH = os.path.join(ANALYTICS_DIR, "subdomains.tsv")
 LONGEST_PAGE_PATH = os.path.join(ANALYTICS_DIR, "longest_page.txt")
+SIMHASH_PATH = os.path.join(ANALYTICS_DIR, "simhash_fingerprints.tsv")
 
 MAX_QUERY_PARAMS = 6
 MAX_PATH_SEGMENTS = 14
@@ -159,14 +163,29 @@ DOKUWIKI_ACTIONS = {
     "export_code",
 }
 
-_seen_pages = set()
-_word_counts = Counter()
-_subdomains = Counter()
-_longest_page = ("", 0)
-_analytics_loaded = False
-_accepted_prefix_counts = Counter()
-_accepted_template_counts = Counter()
+# ---------------------------------------------------------------------------
+# Global state — all guarded by _state_lock for thread safety
+# ---------------------------------------------------------------------------
 
+_state_lock = RLock()
+
+_seen_pages: set[str] = set()
+_word_counts: Counter = Counter()
+_subdomains: Counter = Counter()
+_longest_page: tuple[str, int] = ("", 0)
+_analytics_loaded: bool = False
+_accepted_prefix_counts: Counter = Counter()
+_accepted_template_counts: Counter = Counter()
+
+# SimHash state
+# _simhash_store: list of (url, fingerprint) for all accepted pages
+_simhash_store: list[tuple[str, int]] = []
+_simhash_loaded: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
 
 def scraper(url, resp):
     page_url = canonicalize_url(getattr(resp, "url", url)) or canonicalize_url(url)
@@ -183,6 +202,10 @@ def scraper(url, resp):
         if accept_crawl_link(link)
     ]
 
+
+# ---------------------------------------------------------------------------
+# Link extraction
+# ---------------------------------------------------------------------------
 
 def extract_next_links(url, resp):
     if not is_successful_html_response(resp):
@@ -209,6 +232,10 @@ def extract_next_links(url, resp):
             links.add(normalized)
     return sorted(links)
 
+
+# ---------------------------------------------------------------------------
+# URL validation
+# ---------------------------------------------------------------------------
 
 def is_valid(url):
     try:
@@ -430,17 +457,23 @@ def is_status_dashboard_path(parsed, segments, query_params):
 
 
 def exceeds_prefix_budget(parsed):
-    prefix = prefix_key(parsed)
-    if not prefix:
-        return False
-    return _accepted_prefix_counts[prefix] >= PREFIX_SOFT_LIMIT
+    with _state_lock:
+        prefix = prefix_key(parsed)
+        if not prefix:
+            return False
+        return _accepted_prefix_counts[prefix] >= PREFIX_SOFT_LIMIT
 
 
 def consume_prefix_budget(parsed):
-    prefix = prefix_key(parsed)
-    if prefix:
-        _accepted_prefix_counts[prefix] += 1
+    with _state_lock:
+        prefix = prefix_key(parsed)
+        if prefix:
+            _accepted_prefix_counts[prefix] += 1
 
+
+# ---------------------------------------------------------------------------
+# Page expansion policy
+# ---------------------------------------------------------------------------
 
 def should_expand_page(url, words, links):
     if not url:
@@ -526,17 +559,19 @@ def has_dominant_link_template(links):
 
 
 def exceeds_template_budget(url):
-    template = url_template(url)
-    if not template:
-        return False
-    return _accepted_template_counts[template] >= template_limit(template)
+    with _state_lock:
+        template = url_template(url)
+        if not template:
+            return False
+        return _accepted_template_counts[template] >= template_limit(template)
 
 
 def consume_template_budget(url):
-    template = url_template(url)
-    if not template:
-        return
-    _accepted_template_counts[template] += 1
+    with _state_lock:
+        template = url_template(url)
+        if not template:
+            return
+        _accepted_template_counts[template] += 1
 
 
 def accept_crawl_link(url):
@@ -548,6 +583,10 @@ def accept_crawl_link(url):
     consume_template_budget(url)
     return True
 
+
+# ---------------------------------------------------------------------------
+# Template / prefix helpers
+# ---------------------------------------------------------------------------
 
 def template_limit(template):
     if "/event/*?" in template:
@@ -637,6 +676,10 @@ def prefix_key(parsed):
     return "/".join([host] + parts[:3])
 
 
+# ---------------------------------------------------------------------------
+# Response helpers
+# ---------------------------------------------------------------------------
+
 def is_successful_html_response(resp):
     if getattr(resp, "status", None) != 200:
         return False
@@ -707,29 +750,104 @@ def is_word_exported_html(content):
     )
 
 
-def record_page(url, words):
-    global _longest_page
+# ---------------------------------------------------------------------------
+# SimHash helpers
+# ---------------------------------------------------------------------------
 
-    load_existing_analytics()
-    if url in _seen_pages:
+def _load_simhash_store():
+    """Load persisted fingerprints into _simhash_store. Call with _state_lock held."""
+    global _simhash_loaded
+    if _simhash_loaded:
+        return
+    _simhash_loaded = True
+
+    if not os.path.exists(SIMHASH_PATH):
         return
 
-    _seen_pages.add(url)
-    word_count = len(words)
-    filtered_words = [word for word in words if word not in STOP_WORDS and len(word) > 1]
+    with open(SIMHASH_PATH, "r", encoding="utf-8") as f:
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) != 2:
+                continue
+            try:
+                url_stored, fp_str = parts
+                _simhash_store.append((url_stored, int(fp_str)))
+            except ValueError:
+                continue
 
-    subdomain = urlparse(url).netloc.lower().split(":")[0]
-    _subdomains[subdomain] += 1
-    if word_count > _longest_page[1]:
-        _longest_page = (url, word_count)
 
-    if should_count_words(url, words):
-        _word_counts.update(filtered_words)
+def _is_near_duplicate_page(fingerprint: int) -> bool:
+    """
+    Return True if `fingerprint` is within SIMHASH_THRESHOLD bits of any
+    previously seen fingerprint. Must be called with _state_lock held.
+    """
+    for _url, stored_fp in _simhash_store:
+        if is_near_duplicate(fingerprint, stored_fp):
+            return True
+    return False
 
+
+def _register_simhash(url: str, fingerprint: int):
+    """Append to in-memory store and persist. Must be called with _state_lock held."""
+    _simhash_store.append((url, fingerprint))
     os.makedirs(ANALYTICS_DIR, exist_ok=True)
-    with open(PAGE_STATS_PATH, "a", encoding="utf-8") as page_stats:
-        page_stats.write(json.dumps({"url": url, "word_count": word_count}) + "\n")
-    write_summary_files()
+    with open(SIMHASH_PATH, "a", encoding="utf-8") as f:
+        f.write(f"{url}\t{fingerprint}\n")
+
+
+# ---------------------------------------------------------------------------
+# Analytics recording
+# ---------------------------------------------------------------------------
+
+def record_page(url, words):
+    """
+    Record analytics for `url`.
+
+    Steps:
+    1. Deduplicate by exact URL (seen_pages).
+    2. Compute SimHash fingerprint; skip if near-duplicate of an existing page.
+    3. Update word counts, subdomain counts, longest-page tracking.
+    4. Flush summary files.
+
+    All state mutations are protected by _state_lock.
+    """
+    global _longest_page
+
+    with _state_lock:
+        load_existing_analytics()
+
+        if url in _seen_pages:
+            return
+
+        # --- SimHash near-duplicate check ---
+        meaningful_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
+        fingerprint = simhash(meaningful_words)
+
+        if fingerprint != 0 and _is_near_duplicate_page(fingerprint):
+            # Near-duplicate: still mark as "seen" so we don't re-visit,
+            # but do NOT count its words or record it as a unique page.
+            _seen_pages.add(url)
+            return
+
+        # Accept this page
+        _seen_pages.add(url)
+        if fingerprint != 0:
+            _register_simhash(url, fingerprint)
+
+        word_count = len(words)
+        subdomain = urlparse(url).netloc.lower().split(":")[0]
+        _subdomains[subdomain] += 1
+        if word_count > _longest_page[1]:
+            _longest_page = (url, word_count)
+
+        if should_count_words(url, words):
+            _word_counts.update(meaningful_words)
+
+        os.makedirs(ANALYTICS_DIR, exist_ok=True)
+        with open(PAGE_STATS_PATH, "a", encoding="utf-8") as page_stats:
+            page_stats.write(json.dumps({"url": url, "word_count": word_count}) + "\n")
+
+        write_summary_files()
 
 
 def should_count_words(url, words):
@@ -771,11 +889,14 @@ def template_noise_tokens():
 
 
 def load_existing_analytics():
+    """Load analytics from disk into memory. Must be called with _state_lock held."""
     global _analytics_loaded, _longest_page
 
     if _analytics_loaded:
         return
     _analytics_loaded = True
+
+    _load_simhash_store()
 
     if os.path.exists(WORD_COUNTS_PATH):
         with open(WORD_COUNTS_PATH, "r", encoding="utf-8") as word_counts_file:
@@ -809,6 +930,7 @@ def load_existing_analytics():
 
 
 def write_summary_files():
+    """Write analytics summary files. Must be called with _state_lock held."""
     with open(UNIQUE_URLS_PATH, "w", encoding="utf-8") as unique_urls_file:
         for url in sorted(_seen_pages):
             unique_urls_file.write(f"{url}\n")

@@ -1,3 +1,5 @@
+nohup: ignoring input
+IR US26 X1120651,X1120533,51204940
 2026-05-05 20:02:23,942 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:23,948 - Worker-2 - INFO - Downloaded https://www.informatics.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:23,950 - Worker-1 - INFO - Downloaded https://www.cs.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -360,8 +362,8 @@
 2026-05-05 20:02:56,052 - Worker-2 - INFO - Downloaded https://summeracademy.ics.uci.edu/sessions, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:56,153 - Worker-1 - INFO - Downloaded http://asterixdb.ics.uci.edu/documentation/index.html, status <601>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:56,162 - Worker-1 - INFO - Downloaded http://cherry.ics.uci.edu, status <601>, using cache ('styx.ics.uci.edu', 9014).
-2026-05-05 20:02:56,184 - Worker-1 - INFO - Downloaded http://chime.ics.uci.edu, status <601>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:56,190 - Worker-3 - INFO - Downloaded http://cloudberry.ics.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
+2026-05-05 20:02:56,184 - Worker-1 - INFO - Downloaded http://chime.ics.uci.edu, status <601>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:56,221 - Worker-1 - INFO - Downloaded http://hobbes.ics.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:56,222 - Worker-0 - INFO - Downloaded http://flamingo.ics.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:02:56,549 - Worker-1 - INFO - Downloaded http://ipubmed.ics.uci.edu, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -782,8 +784,8 @@
 2026-05-05 20:03:29,333 - Worker-1 - INFO - Downloaded https://wiki.ics.uci.edu/doku.php/accounts:using_vscode_with_slurm, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:29,338 - Worker-0 - INFO - Downloaded https://isg.ics.uci.edu/event/ketan-c-maheshwari-oak-ridge-national-laboratory, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:29,428 - Worker-2 - INFO - Downloaded https://emj.ics.uci.edu/papers/computational-field-geology, status <200>, using cache ('styx.ics.uci.edu', 9014).
-2026-05-05 20:03:29,636 - Worker-2 - INFO - Downloaded http://seal.ics.uci.edu/projects/coala/index.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:29,645 - Worker-3 - INFO - Downloaded http://www.ics.uci.edu/~djr, status <200>, using cache ('styx.ics.uci.edu', 9014).
+2026-05-05 20:03:29,636 - Worker-2 - INFO - Downloaded http://seal.ics.uci.edu/projects/coala/index.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:29,653 - Worker-1 - INFO - Downloaded http://vision.ics.uci.edu/papers/AllinR_MVA_2007, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:29,658 - Worker-3 - INFO - Downloaded http://computableplant.ics.uci.edu/papers/bti1036/index.html, status <404>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:29,674 - Worker-3 - INFO - Downloaded https://mhcid.ics.uci.edu/mhcid-advisory-board, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -913,6 +915,29 @@
 2026-05-05 20:03:41,068 - Worker-3 - INFO - Downloaded https://ics.uci.edu/2022/08/24/uci-in-top-10-on-fortunes-list-of-best-masters-in-data-science-programs-2, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:41,072 - Worker-2 - INFO - Downloaded https://ngs.ics.uci.edu/professionalsocial/recognitions, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:41,093 - Worker-3 - INFO - Downloaded https://grape.ics.uci.edu/wiki/public/wiki/cs122b-2018-spring-project3, status <200>, using cache ('styx.ics.uci.edu', 9014).
+Exception in thread Thread-4:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/home/zieng/.cache/CS121_Assignment2-modify_2_5/crawler/worker.py", line 43, in run
+    scraped_urls = scraper.scraper(tbd_url, resp)
+  File "/home/zieng/.cache/CS121_Assignment2-modify_2_5/scraper.py", line 196, in scraper
+    links = extract_next_links(url, resp)
+  File "/home/zieng/.cache/CS121_Assignment2-modify_2_5/scraper.py", line 230, in extract_next_links
+    normalized = canonicalize_url(urljoin(base_url, anchor.get("href")))
+  File "/usr/lib/python3.10/urllib/parse.py", line 577, in urljoin
+    urlparse(url, bscheme, allow_fragments)
+  File "/usr/lib/python3.10/urllib/parse.py", line 401, in urlparse
+    splitresult = urlsplit(url, scheme, allow_fragments)
+  File "/usr/lib/python3.10/urllib/parse.py", line 525, in urlsplit
+    _check_bracketed_netloc(netloc)
+  File "/usr/lib/python3.10/urllib/parse.py", line 460, in _check_bracketed_netloc
+    _check_bracketed_host(hostname)
+  File "/usr/lib/python3.10/urllib/parse.py", line 469, in _check_bracketed_host
+    ip = ipaddress.ip_address(hostname) # Throws Value Error if not IPv6 or IPv4
+  File "/usr/lib/python3.10/ipaddress.py", line 54, in ip_address
+    raise ValueError(f'{address!r} does not appear to be an IPv4 or IPv6 address')
+ValueError: 'YOUR_IP' does not appear to be an IPv4 or IPv6 address
 2026-05-05 20:03:41,388 - Worker-2 - INFO - Downloaded https://www.ics.uci.edu/~sharad, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:41,462 - Worker-0 - INFO - Downloaded http://vision.ics.uci.edu/sccv, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:41,477 - Worker-2 - INFO - Downloaded https://archive.ics.uci.edu/dataset/45/heart+disease, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -1038,6 +1063,8 @@
 2026-05-05 20:03:51,629 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~wmt, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:51,662 - Worker-2 - INFO - Downloaded https://www.ics.uci.edu/community/news/view_news?id=1866, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:51,709 - Worker-0 - INFO - Downloaded http://flamingo.ics.uci.edu/releases/1.0/docs/svn.path, status <200>, using cache ('styx.ics.uci.edu', 9014).
+/usr/lib/python3/dist-packages/bs4/__init__.py:431: MarkupResemblesLocatorWarning: "https://grape/svn/group/docs/appstring/tags/release-1.0/" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
+  warnings.warn(
 2026-05-05 20:03:51,788 - Worker-0 - INFO - Downloaded http://cml.ics.uci.edu/2019/09/920, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:51,988 - Worker-1 - INFO - Downloaded https://icde2023.ics.uci.edu/internet, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:03:52,015 - Worker-0 - INFO - Downloaded http://sherlock.ics.uci.edu/data.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -2702,8 +2729,8 @@
 2026-05-05 20:06:31,909 - Worker-1 - INFO - Downloaded https://ics.uci.edu/admissions-information-and-computer-science/graduate-admissions/graduate-research-admissions-faq, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:06:31,910 - Worker-0 - INFO - Downloaded https://ngs.ics.uci.edu/focused-microblogs-fmbs-going-beyond-twitter, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:06:31,932 - Worker-1 - INFO - Downloaded https://www.ics.uci.edu/~jingz31/people, status <200>, using cache ('styx.ics.uci.edu', 9014).
-2026-05-05 20:06:32,128 - Worker-0 - INFO - Downloaded http://computableplant.ics.uci.edu/Mjolsness-SIAM-Workshop-Keynote-2005.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:06:32,129 - Worker-2 - INFO - Downloaded http://flamingo.ics.uci.edu/releases/2.0.1/src/util/misc.h, status <200>, using cache ('styx.ics.uci.edu', 9014).
+2026-05-05 20:06:32,128 - Worker-0 - INFO - Downloaded http://computableplant.ics.uci.edu/Mjolsness-SIAM-Workshop-Keynote-2005.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:06:32,200 - Worker-2 - INFO - Downloaded http://cml.ics.uci.edu/2010/05/2010_vandykims, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:06:32,422 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~jingz31/paper, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:06:32,423 - Worker-1 - INFO - Downloaded https://grape.ics.uci.edu/wiki/public/attachment/wiki/cs122b-2018-winter/BatchInsert.java, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -3030,6 +3057,8 @@
 2026-05-05 20:07:04,878 - Worker-2 - INFO - Downloaded http://cml.ics.uci.edu/2006/10/2006_microsoft, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:07:04,972 - Worker-1 - INFO - Downloaded http://www.ics.uci.edu/~dvk/pub/IEEETC02_dvk.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:07:05,095 - Worker-2 - INFO - Downloaded http://flamingo.ics.uci.edu/releases/1.0/src/svn.path, status <200>, using cache ('styx.ics.uci.edu', 9014).
+/usr/lib/python3/dist-packages/bs4/__init__.py:431: MarkupResemblesLocatorWarning: "https://grape/svn/group/codebase/appstring/tags/release-1.0/" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
+  warnings.warn(
 2026-05-05 20:07:05,108 - Worker-1 - INFO - Downloaded https://ngs.ics.uci.edu/extreme-stories-6, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:07:05,319 - Worker-0 - INFO - Downloaded http://vision.ics.uci.edu/papers/VondrickRP_ECCV_2010, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:07:05,406 - Worker-1 - INFO - Downloaded https://ics.uci.edu/seminar-series/distinguished-lectures, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -3444,8 +3473,12 @@
 2026-05-05 20:07:57,734 - Worker-2 - INFO - Downloaded https://ics.uci.edu/~dhirschb/genealogy/Krakow/other/kra_remuh_yizkor.htm, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:01,765 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dhirschb/genealogy/Krakow/other/occupations.htm, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:02,847 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dhirschb/genealogy/Krakow/other/population.htm, status <200>, using cache ('styx.ics.uci.edu', 9014).
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
 2026-05-05 20:08:03,198 - Worker-0 - INFO - Downloaded https://ngs.ics.uci.edu/going-home, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:07,430 - Worker-0 - INFO - Downloaded https://ngs.ics.uci.edu/middle-of-the-pyramid-mop-2, status <200>, using cache ('styx.ics.uci.edu', 9014).
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
 2026-05-05 20:08:08,238 - Worker-1 - INFO - Downloaded http://flamingo.ics.uci.edu/releases/2.0/src/filtertree/example.cc, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:08,289 - Worker-2 - INFO - Downloaded https://ics.uci.edu/~dsm/cypress, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:08,325 - Worker-1 - INFO - Downloaded http://www.ics.uci.edu/~dsm/suga, status <200>, using cache ('styx.ics.uci.edu', 9014).
@@ -3772,12 +3805,16 @@
 2026-05-05 20:08:58,165 - Worker-2 - INFO - Downloaded https://ics.uci.edu/~dsm/dyn/release/related.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:59,020 - Worker-1 - INFO - Downloaded https://ics.uci.edu/~dsm/project/signal, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:08:59,780 - Worker-2 - INFO - Downloaded https://ics.uci.edu/~dsm/scifire, status <200>, using cache ('styx.ics.uci.edu', 9014).
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
 2026-05-05 20:09:00,226 - Worker-2 - INFO - Downloaded https://ngs.ics.uci.edu/real-time-search-4-driving-using-only-the-rear-view-mirror, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:00,518 - Worker-1 - INFO - Downloaded http://www.ics.uci.edu/%7Exyi, status <500>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:00,565 - Worker-1 - INFO - Downloaded https://ics.uci.edu/~dsm/scifire/people.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:02,460 - Worker-1 - INFO - Downloaded https://ics.uci.edu/~dsm/scifire/posters.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:03,921 - Worker-2 - INFO - Downloaded https://ics.uci.edu/~dsm/scifire/publications.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:04,148 - Worker-1 - INFO - Downloaded https://ngs.ics.uci.edu/experiential-communication-in-singapore, status <200>, using cache ('styx.ics.uci.edu', 9014).
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
+encoding error : input conversion failed due to input error, bytes 0x8F 0xE2 0x3C 0x20
 2026-05-05 20:09:05,439 - Worker-0 - INFO - Downloaded http://www.ics.uci.edu/%7Ezhijingq, status <500>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:05,507 - Worker-0 - INFO - Downloaded https://ngs.ics.uci.edu/knee-surgery, status <200>, using cache ('styx.ics.uci.edu', 9014).
 2026-05-05 20:09:05,512 - Worker-2 - INFO - Downloaded https://ics.uci.edu/~dsm/scifire/research.html, status <200>, using cache ('styx.ics.uci.edu', 9014).
